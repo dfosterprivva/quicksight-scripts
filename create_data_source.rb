@@ -3,7 +3,7 @@
 require './variables.rb'
 
 resp = client.create_data_source({
-  aws_account_id: "AwsAccountId", # required
+  aws_account_id: TARGET_AWS_ACCOUNT_ID, # required
   data_source_id: "ResourceId", # required
   name: "ResourceName", # required
   type: "ADOBE_ANALYTICS", # required, accepts ADOBE_ANALYTICS, AMAZON_ELASTICSEARCH, ATHENA, AURORA, AURORA_POSTGRESQL, AWS_IOT_ANALYTICS, GITHUB, JIRA, MARIADB, MYSQL, ORACLE, POSTGRESQL, PRESTO, REDSHIFT, S3, SALESFORCE, SERVICENOW, SNOWFLAKE, SPARK, SQLSERVER, TERADATA, TWITTER, TIMESTREAM, AMAZON_OPENSEARCH

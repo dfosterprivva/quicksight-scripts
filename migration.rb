@@ -6,8 +6,8 @@ require './variables.rb'
 # initiate connection to dev
 @dev_client = Aws::QuickSight::Client.new(
   region: AWS_REGION,
-  access_key_id: DEV_AWS_ACCESS_KEY_ID,
-  secret_access_key: DEV_AWS_SECRET_ACCESS_KEY
+  access_key_id: SOURCE_AWS_ACCESS_KEY_ID,
+  secret_access_key: SOURCE_AWS_SECRET_ACCESS_KEY
 )
 
 
@@ -36,5 +36,5 @@ def get_data_sets(source_account_id)
   end
 end
 
-#get_data_sources(DEV_AWS_ACCOUNT_ID)
-#get_data_sets(DEV_AWS_ACCOUNT_ID)
+#get_data_sources(SOURCE_AWS_ACCOUNT_ID)
+#get_data_sets(SOURCE_AWS_ACCOUNT_ID)
