@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require 'aws-sdk-quicksight'
+require 'pry'
 
 require './variables.rb'
 
@@ -17,7 +18,6 @@ def get_data_sources(source_account_id)
 
   source_data_sources[:data_sources].each do |source|
     puts "#{source[:name]}"
-    puts "#{source[:arn]}"
     puts "#{source[:data_source_id]}"
     puts "\n"
   end
@@ -31,10 +31,30 @@ def get_data_sets(source_account_id)
   source_data_sets[:data_set_summaries].each do |summary|
     puts "#{summary[:name]}"
     puts "#{summary[:data_set_id]}"
-    #puts "#{summary[:arn]}"
+    puts "\n"
+    puts "START"
+    resp = @source_client.describe_data_set({
+      aws_account_id: SOURCE_AWS_ACCOUNT_ID,
+      data_set_id: "#{summary[:data_set_id]}",
+    })
+    puts resp
+    puts "END"
     puts "\n"
   end
 end
 
-get_data_sources(SOURCE_AWS_ACCOUNT_ID)
+#test grabbing params
+#Web and
+resp = @source_client.describe_data_set({
+  aws_account_id: SOURCE_AWS_ACCOUNT_ID,
+  data_set_id: "02d069aa-e68d-437b-8f38-1b8a76b2b39b"
+})
+#puts resp.class
+#puts resp
+#resp[:data_set].each do |test|
+  #puts test.physical_table_map
+#end
+#get_data_sources(SOURCE_AWS_ACCOUNT_ID)
 #get_data_sets(SOURCE_AWS_ACCOUNT_ID)
+binding.pry
+puts resp.class
