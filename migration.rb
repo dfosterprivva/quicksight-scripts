@@ -56,5 +56,8 @@ resp = @source_client.describe_data_set({
 #end
 #get_data_sources(SOURCE_AWS_ACCOUNT_ID)
 #get_data_sets(SOURCE_AWS_ACCOUNT_ID)
-binding.pry
-puts resp.class
+#binding.pry
+#puts resp.class
+File.open('file_json_complete.json', 'w') do |f|
+  f.puts JSON.pretty_generate(resp.data_set.to_h)
+end
