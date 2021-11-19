@@ -1,18 +1,11 @@
 #!/usr/bin/env ruby
 require 'aws-sdk-quicksight'
 
-# Variables
-DEV_AWS_ACCESS_KEY_ID = ENV['DEV_AWS_ACCESS_KEY_ID']
-DEV_AWS_SECRET_ACCESS_KEY = ENV['DEV_AWS_SECRET_ACCESS_KEY']
-DEV_AWS_ACCOUNT_ID = ENV['DEV_AWS_ACCOUNT_ID']
-
-SANDBOX_AWS_ACCESS_KEY_ID = ENV['SANDBOX_AWS_ACCESS_KEY_ID']
-SANDBOX_AWS_SECRET_ACCESS_KEY = ENV['SANDBOX_AWS_SECRET_ACCESS_KEY']
-SANDBOX_AWS_ACCOUNT_ID = ENV['SANDBOX_AWS_ACCOUNT_ID']
+require './variables.rb'
 
 # initiate connection to dev
 @dev_client = Aws::QuickSight::Client.new(
-  region: 'us-east-1',
+  region: AWS_REGION,
   access_key_id: DEV_AWS_ACCESS_KEY_ID,
   secret_access_key: DEV_AWS_SECRET_ACCESS_KEY
 )
