@@ -4,9 +4,9 @@ require 'aws-sdk-quicksight'
 require './variables.rb'
 
 #scoped params
-DATA_SOURCE_ID=''
-RESOURCE_NAME=''
-TYPE='POSTGRESQL'
+DATA_SOURCE_ID = ''
+RESOURCE_NAME  = ''
+TYPE           = 'POSTGRESQL'
 
 
 # initiate connection to target
@@ -22,11 +22,6 @@ resp = @target_client.create_data_source({
   name: RESOURCE_NAME,
   type: TYPE,
   data_source_parameters: {
-    #postgre_sql_parameters: {
-      #host: TARGET_RDS_HOSTNAME,
-      #port: TARGET_RDS_PORT,
-      #database: TARGET_RDS_DB_NAME,
-    #},
     rds_parameters: {
       instance_id: TARGET_RDS_INSTANCE_ID,
       database: TARGET_RDS_DB_NAME,
@@ -37,8 +32,6 @@ resp = @target_client.create_data_source({
       username: TARGET_RDS_USER,
       password: TARGET_RDS_PWD,
     },
-    # don't think we need this
-#    copy_source_arn: "CopySourceArn",
   },
   permissions: [
     {
