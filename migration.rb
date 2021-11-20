@@ -31,7 +31,7 @@ def get_data_sets(source_account_id)
   source_data_sets[:data_set_summaries].each do |summary|
     data_set_name = "#{summary[:name]}"
     data_set_id = "#{summary[:data_set_id]}"
-    puts "#{data_set_id} #{data_set_name}"
+    puts "Writing #{data_set_id} #{data_set_name}"
     puts "\n"
 
     dataset_details = @source_client.describe_data_set({
