@@ -19,14 +19,18 @@ require './variables.rb'
 # data sets
 def migrate_data_sets
 
-  source_data_sources = @source_client.list_data_sources({ aws_account_id: SOURCE_AWS_ACCOUNT_ID})
+  source_data_sets = @source_client.list_data_sets({ aws_account_id: SOURCE_AWS_ACCOUNT_ID })
 
-  source_data_sources[:data_sources].each do |source|
-    puts "#{source[:name]}"
-    puts "#{source[:data_source_id]}"
+  source_data_sets[:data_set_summaries].each do |summary|
+    data_set_name = "#{summary[:name]}"
+    data_set_id = "#{summary[:data_set_id]}"
+    puts "Creating Data Set: #{data_set_name} with ID: #{data_set_id}"
     puts "\n"
-    source.data_set.arn = "arn:aws:quicksight:us-east-1:#{TARGET_AWS_ACCOUNT_ID}:dataset/#{source.data_set.data_set_id}"
 
+    source = @source_client.describe_data_set({
+      aws_account_id: SOURCE_AWS_ACCOUNT_ID,
+      data_set_id: "#{data_set_id}",
+    })
     #discuss if need iteration for multiple physical tables
     physical_table_id = source.data_set.physical_table_map.keys[0].to_s
 
@@ -43,14 +47,6 @@ def migrate_data_sets
       target_data_source_arn = source.data_set.physical_table_map["#{physical_table_id}"].custom_sql.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
       source.data_set.physical_table_map["#{physical_table_id}"].custom_sql.data_source_arn = target_data_source_arn
     end
-
-
-    # initiate connection to target
-    @target_client = Aws::QuickSight::Client.new(
-      region: AWS_REGION,
-      access_key_id: TARGET_AWS_ACCESS_KEY_ID,
-      secret_access_key: TARGET_AWS_SECRET_ACCESS_KEY
-    )
 
 
     resp = @target_client.create_data_set({
