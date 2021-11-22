@@ -69,8 +69,9 @@ end
   #aws_account_id: SOURCE_AWS_ACCOUNT_ID,
   #data_set_id: "76ea2665-6a40-44f0-ad93-db8f3cbdbfd9"
 #})
-resp = @source_client.list_data_sets({
+resp = @source_client.describe_data_source({
   aws_account_id: SOURCE_AWS_ACCOUNT_ID,
+  data_source_id: '83967cb4-4be0-4150-885f-b93893d11b54',
 })
 binding.pry
 
