@@ -63,11 +63,14 @@ def get_data_sets(source_account_id)
   end
 end
 
-get_data_sets(SOURCE_AWS_ACCOUNT_ID)
+#get_data_sets(SOURCE_AWS_ACCOUNT_ID)
 
 #resp = @source_client.describe_data_set({
   #aws_account_id: SOURCE_AWS_ACCOUNT_ID,
   #data_set_id: "76ea2665-6a40-44f0-ad93-db8f3cbdbfd9"
 #})
-#binding.pry
+resp = @source_client.list_data_sets({
+  aws_account_id: SOURCE_AWS_ACCOUNT_ID,
+})
+binding.pry
 

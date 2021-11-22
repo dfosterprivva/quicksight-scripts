@@ -3,9 +3,43 @@
 require 'aws-sdk-quicksight'
 require './variables.rb'
 
+#BEGIN source stuff for dev
+################################################################################
+# initiate connection to source
+@source_client = Aws::QuickSight::Client.new(
+  region: AWS_REGION,
+  access_key_id: SOURCE_AWS_ACCESS_KEY_ID,
+  secret_access_key: SOURCE_AWS_SECRET_ACCESS_KEY
+)
+
+
+dataset_details = @source_client.describe_data_set({
+  aws_account_id: SOURCE_AWS_ACCOUNT_ID,
+  data_set_id: "76ea2665-6a40-44f0-ad93-db8f3cbdbfd9"
+})
+
+dataset_details.data_set.arn = "arn:aws:quicksight:us-east-1:#{TARGET_AWS_ACCOUNT_ID}:dataset/#{dataset_details.data_set.data_set_id}"
+#discuss if need iteration for multiple physical tables
+physical_table_id = dataset_details.data_set.physical_table_map.keys[0].to_s
+#check table type and create source accordingly 
+if dataset_details.data_set.physical_table_map["#{physical_table_id}"][:s3_source] != nil
+  target_data_source_arn = dataset_details.data_set.physical_table_map["#{physical_table_id}"].s3_source.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
+  dataset_details.data_set.physical_table_map["#{physical_table_id}"].s3_source.data_source_arn = target_data_source_arn
+
+elsif dataset_details.data_set.physical_table_map["#{physical_table_id}"][:relational_table] != nil
+  target_data_source_arn = dataset_details.data_set.physical_table_map["#{physical_table_id}"].relational_table.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
+  dataset_details.data_set.physical_table_map["#{physical_table_id}"].relational_table.data_source_arn = target_data_source_arn
+
+elsif dataset_details.data_set.physical_table_map["#{physical_table_id}"][:custom_sql] != nil
+  target_data_source_arn = dataset_details.data_set.physical_table_map["#{physical_table_id}"].custom_sql.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
+  dataset_details.data_set.physical_table_map["#{physical_table_id}"].custom_sql.data_source_arn = target_data_source_arn
+end
+################################################################################
+#END source stuff for dev
+
 #scoped params
-DATA_SET_ID = ''
-RESOURCE_NAME  = ''
+#DATA_SET_ID = ''
+#RESOURCE_NAME  = ''
 
 # initiate connection to target
 @target_client = Aws::QuickSight::Client.new(
@@ -14,172 +48,41 @@ RESOURCE_NAME  = ''
   secret_access_key: TARGET_AWS_SECRET_ACCESS_KEY
 )
 
+
 resp = @target_client.create_data_set({
   aws_account_id: TARGET_AWS_ACCOUNT_ID,
-  data_set_id: DATA_SET_ID,
-  name: RESOURCE_NAME,
-  physical_table_map: { # required
-    "PhysicalTableId" => {
-      relational_table: {
-        data_source_arn: "Arn", # required
-        catalog: "RelationalTableCatalog",
-        schema: "RelationalTableSchema",
-        name: "RelationalTableName", # required
-        input_columns: [ # required
-          {
-            name: "ColumnName", # required
-            type: "STRING", # required, accepts STRING, INTEGER, DECIMAL, DATETIME, BIT, BOOLEAN, JSON
-          },
-        ],
-      },
-      custom_sql: {
-        data_source_arn: "Arn", # required
-        name: "CustomSqlName", # required
-        sql_query: "SqlQuery", # required
-        columns: [
-          {
-            name: "ColumnName", # required
-            type: "STRING", # required, accepts STRING, INTEGER, DECIMAL, DATETIME, BIT, BOOLEAN, JSON
-          },
-        ],
-      },
-      s3_source: {
-        data_source_arn: "Arn", # required
-        upload_settings: {
-          format: "CSV", # accepts CSV, TSV, CLF, ELF, XLSX, JSON
-          start_from_row: 1,
-          contains_header: false,
-          text_qualifier: "DOUBLE_QUOTE", # accepts DOUBLE_QUOTE, SINGLE_QUOTE
-          delimiter: "Delimiter",
-        },
-        input_columns: [ # required
-          {
-            name: "ColumnName", # required
-            type: "STRING", # required, accepts STRING, INTEGER, DECIMAL, DATETIME, BIT, BOOLEAN, JSON
-          },
-        ],
-      },
-    },
-  },
-  logical_table_map: {
-    "LogicalTableId" => {
-      alias: "LogicalTableAlias", # required
-      data_transforms: [
-        {
-          project_operation: {
-            projected_columns: ["String"], # required
-          },
-          filter_operation: {
-            condition_expression: "Expression", # required
-          },
-          create_columns_operation: {
-            columns: [ # required
-              {
-                column_name: "ColumnName", # required
-                column_id: "ColumnId", # required
-                expression: "Expression", # required
-              },
-            ],
-          },
-          rename_column_operation: {
-            column_name: "ColumnName", # required
-            new_column_name: "ColumnName", # required
-          },
-          cast_column_type_operation: {
-            column_name: "ColumnName", # required
-            new_column_type: "STRING", # required, accepts STRING, INTEGER, DECIMAL, DATETIME
-            format: "TypeCastFormat",
-          },
-          tag_column_operation: {
-            column_name: "ColumnName", # required
-            tags: [ # required
-              {
-                column_geographic_role: "COUNTRY", # accepts COUNTRY, STATE, COUNTY, CITY, POSTCODE, LONGITUDE, LATITUDE
-                column_description: {
-                  text: "ColumnDescriptiveText",
-                },
-              },
-            ],
-          },
-          untag_column_operation: {
-            column_name: "ColumnName", # required
-            tag_names: ["COLUMN_GEOGRAPHIC_ROLE"], # required, accepts COLUMN_GEOGRAPHIC_ROLE, COLUMN_DESCRIPTION
-          },
-        },
-      ],
-      source: { # required
-        join_instruction: {
-          left_operand: "LogicalTableId", # required
-          right_operand: "LogicalTableId", # required
-          left_join_key_properties: {
-            unique_key: false,
-          },
-          right_join_key_properties: {
-            unique_key: false,
-          },
-          type: "INNER", # required, accepts INNER, OUTER, LEFT, RIGHT
-          on_clause: "OnClause", # required
-        },
-        physical_table_id: "PhysicalTableId",
-        data_set_arn: "Arn",
-      },
-    },
-  },
-  import_mode: "SPICE", # required, accepts SPICE, DIRECT_QUERY
-  column_groups: [
-    {
-      geo_spatial_column_group: {
-        name: "ColumnGroupName", # required
-        country_code: "US", # required, accepts US
-        columns: ["ColumnName"], # required
-      },
-    },
-  ],
-  field_folders: {
-    "FieldFolderPath" => {
-      description: "FieldFolderDescription",
-      columns: ["String"],
-    },
-  },
+  data_set_id: dataset_details.data_set.data_set_id,
+  name: dataset_details.data_set.name,
+  physical_table_map: dataset_details.data_set.physical_table_map,
+  logical_table_map: dataset_details.data_set.logical_table_map,
+  import_mode: dataset_details.data_set.import_mode,
+  #column_groups: dataset_details.data_set.column_groups,
   permissions: [
     {
-      principal: "Principal", # required
-      actions: ["String"], # required
+      principal: TARGET_PRINCIPAL_USER_ARN,
+      actions: [
+        "quicksight:UpdateDataSetPermissions",
+        "quicksight:DescribeDataSet",
+        "quicksight:DescribeDataSetPermissions",
+        "quicksight:PassDataSet",
+        "quicksight:DescribeIngestion",
+        "quicksight:ListIngestions",
+        "quicksight:UpdateDataSet",
+        "quicksight:DeleteDataSet",
+        "quicksight:CreateIngestion",
+        "quicksight:CancelIngestion"
+      ]
     },
   ],
-  row_level_permission_data_set: {
-    namespace: "Namespace",
-    arn: "Arn", # required
-    permission_policy: "GRANT_ACCESS", # required, accepts GRANT_ACCESS, DENY_ACCESS
-    format_version: "VERSION_1", # accepts VERSION_1, VERSION_2
-    status: "ENABLED", # accepts ENABLED, DISABLED
-  },
-  row_level_permission_tag_configuration: {
-    status: "ENABLED", # accepts ENABLED, DISABLED
-    tag_rules: [ # required
-      {
-        tag_key: "SessionTagKey", # required
-        column_name: "String", # required
-        tag_multi_value_delimiter: "RowLevelPermissionTagDelimiter",
-        match_all_value: "SessionTagValue",
-      },
-    ],
-  },
-  column_level_permission_rules: [
-    {
-      principals: ["String"],
-      column_names: ["String"],
-    },
-  ],
+  row_level_permission_data_set: dataset_details.data_set.row_level_permission_data_set,
+  row_level_permission_tag_configuration: dataset_details.data_set.row_level_permission_tag_configuration,
+  column_level_permission_rules: dataset_details.data_set.column_level_permission_rules,
   tags: [
     {
-      key: "TagKey", # required
-      value: "TagValue", # required
+      key: "Name", # required
+      value: dataset_details.data_set.name, # required
     },
   ],
-  data_set_usage_configuration: {
-    disable_use_as_direct_query_source: false,
-    disable_use_as_imported_source: false,
-  },
+  data_set_usage_configuration: dataset_details.data_set.data_set_usage_configuration,
 })
 
