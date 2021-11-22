@@ -25,13 +25,6 @@ def migrate_data_sources
     puts "creating #{source.name} with ID: #{source.data_source_id}"
     puts "\n"
 
-    # initiate connection to target
-    @target_client = Aws::QuickSight::Client.new(
-      region: AWS_REGION,
-      access_key_id: TARGET_AWS_ACCESS_KEY_ID,
-      secret_access_key: TARGET_AWS_SECRET_ACCESS_KEY
-    )
-
     #build out data_source_parameters
     if source.data_source_parameters.rds_parameters != nil
       source.data_source_parameters.rds_parameters[:instance_id] = TARGET_RDS_INSTANCE_ID
