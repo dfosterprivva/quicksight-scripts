@@ -91,4 +91,31 @@ def migrate_data_sets
   end
 end
 
-migrate_data_sets
+def check_data_sets
+
+  #gather source data sets
+  source_data_sets = @source_client.list_data_sets({ aws_account_id: SOURCE_AWS_ACCOUNT_ID })
+
+  #gather target data sets, create id list
+  target_data_set_list = @target_client.list_data_sets({ aws_account_id: TARGET_AWS_ACCOUNT_ID })
+  target_data_set_id_hash = {}
+  target_data_set_list[:data_sets].each do |target_data_set|
+    target_data_set_id_hash[target_data_set.data_set_id] = target_data_set.arn
+  end
+
+  source_data_sets[:data_sets].each do |source|
+    puts "Checking #{source.name} with ID: #{source.data_set_id}"
+
+    if target_data_set_id_hash["#{source.data_set_id}"]
+      then
+      puts "Data source already Exists... updating"
+      puts "\n"
+      #update_data_set(source)
+    else
+      puts "Data source does NOT exist... will migrate source"
+      puts "\n"
+      #migrate_data_set(source)
+    end
+  end
+end
+check_data_sets

@@ -144,7 +144,7 @@ amazon_open_search_parameters
 end
 
 
-def check_data_source
+def check_data_sources
 
   #gather source data sources
   source_data_sources = @source_client.list_data_sources({ aws_account_id: SOURCE_AWS_ACCOUNT_ID })
@@ -172,4 +172,4 @@ def check_data_source
   end
 end
 
-check_data_source
+check_data_sources
