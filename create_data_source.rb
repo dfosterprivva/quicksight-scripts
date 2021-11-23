@@ -95,17 +95,23 @@ amazon_open_search_parameters
   })
 end
 
+
 def check_data_source
 
-
+  #gather source data sources
   source_data_sources = @source_client.list_data_sources({ aws_account_id: SOURCE_AWS_ACCOUNT_ID })
+
+  #gather target data sources, create id list
+  target_data_source_list = @target_client.list_data_sources({ aws_account_id: TARGET_AWS_ACCOUNT_ID })
+  target_data_source_id_hash = {}
+  target_data_source_list[:data_sources].each do |target_data_source|
+    target_data_source_id_hash[target_data_source.data_source_id] = target_data_source.arn
+  end
 
   source_data_sources[:data_sources].each do |source|
     puts "Checking #{source.name} with ID: #{source.data_source_id}"
-    if @target_client.describe_data_source({
-        aws_account_id: TARGET_AWS_ACCOUNT_ID,
-        data_source_id: source.data_source_id,
-    })
+
+    if target_data_source_id_hash["#{source.data_source_id}"]
       then
       puts "Data source already Exists... updating"
       puts "\n"
@@ -113,8 +119,7 @@ def check_data_source
     else
       puts "Data source does NOT exist... will migrate source"
       puts "\n"
-      # migrate
-
+      migrate_data_source(source)
     end
   end
 end

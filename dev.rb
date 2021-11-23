@@ -12,6 +12,12 @@ require './variables.rb'
 )
 
 
+# initiate connection to target
+@target_client = Aws::QuickSight::Client.new(
+  region: AWS_REGION,
+  access_key_id: TARGET_AWS_ACCESS_KEY_ID,
+  secret_access_key: TARGET_AWS_SECRET_ACCESS_KEY
+)
 #get_data_sets(SOURCE_AWS_ACCOUNT_ID)
 
 #resp = @source_client.describe_data_set({
@@ -22,5 +28,6 @@ require './variables.rb'
   #aws_account_id: SOURCE_AWS_ACCOUNT_ID,
   #data_source_id: '83967cb4-4be0-4150-885f-b93893d11b54',
 #})
+source_data_sources = @source_client.list_data_sources({ aws_account_id: SOURCE_AWS_ACCOUNT_ID })
 binding.pry
 
