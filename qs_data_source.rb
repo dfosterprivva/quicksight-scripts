@@ -55,39 +55,19 @@ amazon_open_search_parameters
 =end
   end
 
-  #create data source
+  #update data source
   resp = @target_client.update_data_source({
     aws_account_id: TARGET_AWS_ACCOUNT_ID,
     data_source_id: source.data_source_id,
     name: source.name,
-    type: source.type,
     data_source_parameters: source.data_source_parameters,
     credentials: credential_pair_hash,
-    permissions: [
-      {
-        principal: TARGET_PRINCIPAL_USER_ARN,
-        actions: [
-          "quicksight:UpdateDataSourcePermissions",
-          "quicksight:DescribeDataSource",
-          "quicksight:DescribeDataSourcePermissions",
-          "quicksight:PassDataSource",
-          "quicksight:UpdateDataSource",
-          "quicksight:DeleteDataSource"
-        ]
-      },
-    ],
     vpc_connection_properties: {
       vpc_connection_arn: TARGET_VPC_ARN,
     },
     ssl_properties: {
       disable_ssl: false,
     },
-    tags: [
-      {
-        key: "Name", # required
-        value: source.name, # required
-      },
-    ],
   })
 end
 
