@@ -18,20 +18,22 @@ require './variables.rb'
 )
 
 # data sources
-def migrate_data_sources
-  source_data_sources = @source_client.list_data_sources({ aws_account_id: SOURCE_AWS_ACCOUNT_ID })
 
-  source_data_sources[:data_sources].each do |source|
-    puts "creating #{source.name} with ID: #{source.data_source_id}"
-    puts "\n"
+def update_data_source(source)
+  puts "future update code here"
+end
 
-    #build out data_source_parameters
-    if source.data_source_parameters.rds_parameters != nil
-      source.data_source_parameters.rds_parameters[:instance_id] = TARGET_RDS_INSTANCE_ID
-      source.data_source_parameters.rds_parameters[:database] = TARGET_RDS_DB_NAME
-      credential_pair_hash = { credential_pair: {username: TARGET_RDS_USER, password: TARGET_RDS_PWD }}
-    else
-      abort("Parameter set not built yet")
+def migrate_data_source(source)
+  puts "creating #{source.name} with ID: #{source.data_source_id}"
+  puts "\n"
+
+  #build out data_source_parameters
+  if source.data_source_parameters.rds_parameters != nil
+    source.data_source_parameters.rds_parameters[:instance_id] = TARGET_RDS_INSTANCE_ID
+    source.data_source_parameters.rds_parameters[:database] = TARGET_RDS_DB_NAME
+    credential_pair_hash = { credential_pair: {username: TARGET_RDS_USER, password: TARGET_RDS_PWD }}
+  else
+    abort("Parameter set not built yet")
 =begin
 Possible params to build
 amazon_elasticsearch_parameters
@@ -55,43 +57,66 @@ teradata_parameters
 twitter_parameters
 amazon_open_search_parameters
 =end
-    end
+  end
 
-    #create data source
-    resp = @target_client.create_data_source({
-      aws_account_id: TARGET_AWS_ACCOUNT_ID,
-      data_source_id: source.data_source_id,
-      name: source.name,
-      type: source.type,
-      data_source_parameters: source.data_source_parameters,
-      credentials: credential_pair_hash,
-      permissions: [
-        {
-          principal: TARGET_PRINCIPAL_USER_ARN,
-          actions: [
-            "quicksight:UpdateDataSourcePermissions",
-            "quicksight:DescribeDataSource",
-            "quicksight:DescribeDataSourcePermissions",
-            "quicksight:PassDataSource",
-            "quicksight:UpdateDataSource",
-            "quicksight:DeleteDataSource"
-          ]
-        },
-      ],
-      vpc_connection_properties: {
-        vpc_connection_arn: TARGET_VPC_ARN,
+  #create data source
+  resp = @target_client.create_data_source({
+    aws_account_id: TARGET_AWS_ACCOUNT_ID,
+    data_source_id: source.data_source_id,
+    name: source.name,
+    type: source.type,
+    data_source_parameters: source.data_source_parameters,
+    credentials: credential_pair_hash,
+    permissions: [
+      {
+        principal: TARGET_PRINCIPAL_USER_ARN,
+        actions: [
+          "quicksight:UpdateDataSourcePermissions",
+          "quicksight:DescribeDataSource",
+          "quicksight:DescribeDataSourcePermissions",
+          "quicksight:PassDataSource",
+          "quicksight:UpdateDataSource",
+          "quicksight:DeleteDataSource"
+        ]
       },
-      ssl_properties: {
-        disable_ssl: false,
+    ],
+    vpc_connection_properties: {
+      vpc_connection_arn: TARGET_VPC_ARN,
+    },
+    ssl_properties: {
+      disable_ssl: false,
+    },
+    tags: [
+      {
+        key: "Name", # required
+        value: source.name, # required
       },
-      tags: [
-        {
-          key: "Name", # required
-          value: source.name, # required
-        },
-      ],
+    ],
+  })
+end
+
+def check_data_source
+
+
+  source_data_sources = @source_client.list_data_sources({ aws_account_id: SOURCE_AWS_ACCOUNT_ID })
+
+  source_data_sources[:data_sources].each do |source|
+    puts "Checking #{source.name} with ID: #{source.data_source_id}"
+    if @target_client.describe_data_source({
+        aws_account_id: TARGET_AWS_ACCOUNT_ID,
+        data_source_id: source.data_source_id,
     })
+      then
+      puts "Data source already Exists... updating"
+      puts "\n"
+      # update method here
+    else
+      puts "Data source does NOT exist... will migrate source"
+      puts "\n"
+      # migrate
+
+    end
   end
 end
 
-migrate_data_sources
+check_data_source
