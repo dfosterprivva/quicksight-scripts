@@ -20,6 +20,31 @@ require 'pry'
 
 
 # data sets
+
+def update_data_set(source)
+  puts "Updating Data Set: #{source.name} with ID: #{source.data_set_id}"
+  puts "\n"
+
+  resource = @source_client.describe_data_set({
+    aws_account_id: SOURCE_AWS_ACCOUNT_ID,
+    data_set_id: "#{source.data_set_id}",
+  })
+
+  resp = @target_client.update_data_set({
+    aws_account_id: TARGET_AWS_ACCOUNT_ID,
+    data_set_id: resource.data_set.data_set_id,
+    name: resource.data_set.name,
+    physical_table_map: resource.data_set.physical_table_map,
+    logical_table_map: resource.data_set.logical_table_map,
+    import_mode: resource.data_set.import_mode,
+    #column_groups: resource.data_set.column_groups,
+    row_level_permission_data_set: resource.data_set.row_level_permission_data_set,
+    row_level_permission_tag_configuration: resource.data_set.row_level_permission_tag_configuration,
+    column_level_permission_rules: resource.data_set.column_level_permission_rules,
+    data_set_usage_configuration: resource.data_set.data_set_usage_configuration,
+  })
+end
+
 def migrate_data_set(source)
 
   puts "creating Data Set: #{source.name} with ID: #{source.data_set_id}"
@@ -108,7 +133,7 @@ def check_data_sets
       then
       puts "Data source already Exists... updating"
       puts "\n"
-      #update_data_set(source)
+      update_data_set(source)
     else
       puts "Checking set for migration readiness..."
       if exclusion_list.include?(source.name)
