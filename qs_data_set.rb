@@ -2,7 +2,6 @@
 
 require 'aws-sdk-quicksight'
 require './variables.rb'
-require 'pry'
 
 # initiate connection to source
 @source_client = Aws::QuickSight::Client.new(
@@ -15,11 +14,30 @@ require 'pry'
 @target_client = Aws::QuickSight::Client.new(
   region: AWS_REGION,
   access_key_id: TARGET_AWS_ACCESS_KEY_ID,
-  secret_access_key: TARGET_AWS_SECRET_ACCESS_KEY
+  secret_access_key: TARGET_AWS_SECRET_ACCESS_KEY,
 )
 
 
 # data sets
+
+def replace_data_source_arn(resource)
+  #!!!discuss if need iteration for multiple physical tables
+  physical_table_id = resource.data_set.physical_table_map.keys[0].to_s
+
+  #check table type and create resource accordingly
+  if resource.data_set.physical_table_map["#{physical_table_id}"][:s3_source] != nil
+    target_data_source_arn = resource.data_set.physical_table_map["#{physical_table_id}"].s3_source.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
+    resource.data_set.physical_table_map["#{physical_table_id}"].s3_source.data_source_arn = target_data_source_arn
+
+  elsif resource.data_set.physical_table_map["#{physical_table_id}"][:relational_table] != nil
+    target_data_source_arn = resource.data_set.physical_table_map["#{physical_table_id}"].relational_table.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
+    resource.data_set.physical_table_map["#{physical_table_id}"].relational_table.data_source_arn = target_data_source_arn
+
+  elsif resource.data_set.physical_table_map["#{physical_table_id}"][:custom_sql] != nil
+    target_data_source_arn = resource.data_set.physical_table_map["#{physical_table_id}"].custom_sql.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
+    resource.data_set.physical_table_map["#{physical_table_id}"].custom_sql.data_source_arn = target_data_source_arn
+  end
+end
 
 def update_data_set(source)
   puts "Updating Data Set: #{source.name} with ID: #{source.data_set_id}"
@@ -29,6 +47,8 @@ def update_data_set(source)
     aws_account_id: SOURCE_AWS_ACCOUNT_ID,
     data_set_id: "#{source.data_set_id}",
   })
+
+  replace_data_source_arn(resource)
 
   resp = @target_client.update_data_set({
     aws_account_id: TARGET_AWS_ACCOUNT_ID,
@@ -55,22 +75,7 @@ def migrate_data_set(source)
     data_set_id: "#{source.data_set_id}",
   })
 
-  #!!!discuss if need iteration for multiple physical tables
-  physical_table_id = resource.data_set.physical_table_map.keys[0].to_s
-
-   #check table type and create resource accordingly
-    if resource.data_set.physical_table_map["#{physical_table_id}"][:s3_source] != nil
-      target_data_source_arn = resource.data_set.physical_table_map["#{physical_table_id}"].s3_source.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
-      resource.data_set.physical_table_map["#{physical_table_id}"].s3_source.data_source_arn = target_data_source_arn
-
-    elsif resource.data_set.physical_table_map["#{physical_table_id}"][:relational_table] != nil
-      target_data_source_arn = resource.data_set.physical_table_map["#{physical_table_id}"].relational_table.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
-      resource.data_set.physical_table_map["#{physical_table_id}"].relational_table.data_source_arn = target_data_source_arn
-
-    elsif resource.data_set.physical_table_map["#{physical_table_id}"][:custom_sql] != nil
-      target_data_source_arn = resource.data_set.physical_table_map["#{physical_table_id}"].custom_sql.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
-      resource.data_set.physical_table_map["#{physical_table_id}"].custom_sql.data_source_arn = target_data_source_arn
-    end
+  replace_data_source_arn(resource)
 
   resp = @target_client.create_data_set({
     aws_account_id: TARGET_AWS_ACCOUNT_ID,
@@ -150,4 +155,3 @@ def check_data_sets
 end
 
 check_data_sets
-#binding.pry
