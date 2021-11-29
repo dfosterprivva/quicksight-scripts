@@ -33,13 +33,13 @@ def migrate_data_set(source)
   #!!!discuss if need iteration for multiple physical tables
   physical_table_id = resource.data_set.physical_table_map.keys[0].to_s
 
-   #check table type and create source accordingly
+   #check table type and create resource accordingly
     if resource.data_set.physical_table_map["#{physical_table_id}"][:s3_source] != nil
-      target_data_source_arn = source.data_set.physical_table_map["#{physical_table_id}"].s3_source.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
+      target_data_source_arn = resource.data_set.physical_table_map["#{physical_table_id}"].s3_source.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
       resource.data_set.physical_table_map["#{physical_table_id}"].s3_source.data_source_arn = target_data_source_arn
 
     elsif resource.data_set.physical_table_map["#{physical_table_id}"][:relational_table] != nil
-      target_data_source_arn = source.data_set.physical_table_map["#{physical_table_id}"].relational_table.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
+      target_data_source_arn = resource.data_set.physical_table_map["#{physical_table_id}"].relational_table.data_source_arn.gsub("#{SOURCE_AWS_ACCOUNT_ID}","#{TARGET_AWS_ACCOUNT_ID}")
       resource.data_set.physical_table_map["#{physical_table_id}"].relational_table.data_source_arn = target_data_source_arn
 
     elsif resource.data_set.physical_table_map["#{physical_table_id}"][:custom_sql] != nil
@@ -98,6 +98,9 @@ def check_data_sets
     target_data_set_id_hash[target_data_set.data_set_id] = target_data_set.arn
   end
 
+  #create exlusion prefixes for sets not to be included for migration
+  exclusion_list = ["assessments_with_labels", "assessments_4a087994-f400-4c53-8e3b-61e4a86d4225"]
+
   source_data_sets[:data_set_summaries].each do |source|
     puts "Checking Data Set:#{source.name} with ID: #{source.data_set_id}"
 
@@ -107,11 +110,19 @@ def check_data_sets
       puts "\n"
       #update_data_set(source)
     else
-      puts "Data source does NOT exist... will migrate source"
-      puts "\n"
-      migrate_data_set(source)
+      puts "Checking set for migration readiness..."
+      if exclusion_list.include?(source.name)
+        then
+        puts "Skipping #{source.name} with ID: #{source.data_set_id}.  This set is not meant to be migrated"
+        puts "\n"
+      else
+        puts "Data set ready for migration and does NOT exist in target... will migrate set"
+        puts "\n"
+        migrate_data_set(source)
+      end
     end
   end
 end
 
 check_data_sets
+#binding.pry
